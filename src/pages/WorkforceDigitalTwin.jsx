@@ -55,7 +55,6 @@ export default function WorkforceDigitalTwin() {
         scenario_type: 'mixed',
       });
 
-      // Add projected state (12 months ahead)
       const projectedDemand = sim.required_skills.map(s => ({
         ...s,
         projected_demand: Math.round(s.demand * (1 + s.growth / 100)),
@@ -91,7 +90,6 @@ export default function WorkforceDigitalTwin() {
         <DataSourceBadge />
       </div>
 
-      {/* Controls */}
       <SectionCard title="Digital Twin Controls" icon={Cpu}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
           <div>
@@ -118,7 +116,6 @@ export default function WorkforceDigitalTwin() {
           </div>
         </div>
 
-        {/* What-If Scenarios */}
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1.5 block">What-If Scenario</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -143,7 +140,6 @@ export default function WorkforceDigitalTwin() {
 
       {result && !running && (
         <>
-          {/* Scenario Result Banner */}
           <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
             <Zap className="w-5 h-5 text-primary" />
             <div>
@@ -152,7 +148,6 @@ export default function WorkforceDigitalTwin() {
             </div>
           </div>
 
-          {/* Current vs Projected */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KPICard icon="users" color="cyan" label="Workforce Need" value={result.workforce.workforce_requirement.toLocaleString()} />
             <KPICard icon="gaps" color="red" label="Current Gap" value={result.workforce.total_gap} />
@@ -160,7 +155,6 @@ export default function WorkforceDigitalTwin() {
             <KPICard icon="budget" color="emerald" label="Budget Used" value={`₹${result.optimization.total_allocated_cr}Cr`} />
           </div>
 
-          {/* Current vs Projected Chart */}
           <SectionCard title="Current vs Projected Skill Gap" subtitle="What-If scenario impact on skill gaps" icon={TrendingUp} demo>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
@@ -174,7 +168,6 @@ export default function WorkforceDigitalTwin() {
             </ResponsiveContainer>
           </SectionCard>
 
-          {/* Requirements */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <SectionCard title="Training Requirements" icon={GraduationCap} demo>
               <div className="space-y-2">

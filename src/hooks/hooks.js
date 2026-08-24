@@ -1,17 +1,4 @@
-// ============================================================
-// FORESKILLS — SHARED HOOKS & CONTEXTS
-// Small application-wide React hooks consolidated in one module:
-//   • useTheme      — light/dark theme with localStorage persistence
-//   • AuthProvider / useAuth — local demo session (persisted, no backend)
-//   • useIsMobile   — responsive breakpoint flag
-//   • useSize       — element size measurement via ResizeObserver
-// ============================================================
-
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-
-// ------------------------------------------------------------
-// THEME
-// ------------------------------------------------------------
 
 const THEME_STORAGE_KEY = 'foreskills-theme';
 
@@ -20,7 +7,6 @@ function getInitialTheme() {
   if (typeof window === 'undefined') return 'light';
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
-  // Default to light for a professional government interface
   return 'light';
 }
 
@@ -31,7 +17,6 @@ function applyTheme(/** @type {'light' | 'dark'} */ theme) {
   root.style.colorScheme = theme;
 }
 
-// Apply once on module load to prevent flash
 if (typeof window !== 'undefined') {
   applyTheme(getInitialTheme());
 }
@@ -47,16 +32,6 @@ export function useTheme() {
   const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
   return { theme, setTheme, toggle };
 }
-
-// ------------------------------------------------------------
-// LOCAL SESSION CONTEXT
-// FORESKILLS runs without a backend authentication service, so the
-// provider establishes a safe local demo session automatically and
-// persists it to localStorage (`foreskills-session`) so sign-in
-// survives page refreshes. Sign out clears it. Authentication (SSO)
-// is a future integration — no network calls, no vendor SDK, and
-// no secrets (passwords/keys) are ever stored.
-// ------------------------------------------------------------
 
 const SESSION_STORAGE_KEY = 'foreskills-session';
 
@@ -84,7 +59,6 @@ const SESSION_STORAGE_KEY = 'foreskills-session';
  * @property {() => void} logout
  */
 
-// Operating role for this workstation. Replace when SSO lands.
 const DEFAULT_SESSION = Object.freeze({
   displayName: 'Government Officer',
   role: 'State Official',
@@ -110,7 +84,7 @@ function persistSession(session) {
     if (session) window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     else window.localStorage.removeItem(SESSION_STORAGE_KEY);
   } catch {
-    // Storage unavailable — the demo session still works in memory.
+    // storage unavailable
   }
 }
 
@@ -133,7 +107,6 @@ export function AuthProvider({ children }) {
     return null;
   });
 
-  // Demo mode: establish the local officer session on first load.
   useEffect(() => {
     setSession((current) => current || createDemoSession());
   }, []);

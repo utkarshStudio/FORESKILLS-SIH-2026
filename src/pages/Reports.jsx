@@ -218,7 +218,6 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Report Selection */}
         <SectionCard title="Report Configuration" icon={FileText}>
           <div className="space-y-4">
             <div>
@@ -276,7 +275,6 @@ export default function Reports() {
           </div>
         </SectionCard>
 
-        {/* Report Preview */}
         <div className="lg:col-span-2">
           {generatedReport ? (
             <SectionCard
@@ -298,7 +296,6 @@ export default function Reports() {
               }
             >
               <div className="space-y-4">
-                {/* Inputs */}
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Inputs</h4>
                   <div className="grid grid-cols-2 gap-2">
@@ -311,13 +308,11 @@ export default function Reports() {
                   </div>
                 </div>
 
-                {/* Method */}
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Method</h4>
                   <p className="text-xs text-foreground p-2.5 rounded-lg bg-secondary/20 border border-border">{generatedReport.method}</p>
                 </div>
 
-                {/* Results */}
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Results</h4>
                   <pre className="text-xs text-foreground p-3 rounded-lg bg-secondary/20 border border-border overflow-x-auto whitespace-pre-wrap">
@@ -325,7 +320,6 @@ export default function Reports() {
                   </pre>
                 </div>
 
-                {/* Confidence & Evidence */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-secondary/30 border border-border">
                     <div className="flex items-center gap-2 mb-2">
@@ -343,7 +337,6 @@ export default function Reports() {
                   </div>
                 </div>
 
-                {/* Evidence */}
                 <div>
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Evidence</h4>
                   <div className="space-y-1">
@@ -356,7 +349,6 @@ export default function Reports() {
                   </div>
                 </div>
 
-                {/* Export Result */}
                 {exportResult && (
                   <div className={`p-3 rounded-lg border ${exportResult.error ? 'bg-[hsl(var(--status-high))]/10 border-[hsl(var(--status-high))]/30' : 'bg-[hsl(var(--status-low))]/10 border-[hsl(var(--status-low))]/30'}`}>
                     {exportResult.error ? (

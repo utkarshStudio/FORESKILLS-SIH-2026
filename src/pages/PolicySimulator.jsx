@@ -29,12 +29,10 @@ export default function PolicySimulator() {
 
   const availableInvestments = INVESTMENTS.filter(i => i.district_id === inputs.district_id && i.industry_id === inputs.industry_id);
 
-  // Auto-run on first load with default values (for demo)
   useEffect(() => {
     handleRun();
   }, []);
 
-  // Update investment when district/industry changes
   useEffect(() => {
     if (availableInvestments.length > 0 && !availableInvestments.find(i => i.id === inputs.investment_id)) {
       setInputs(prev => ({ ...prev, investment_id: availableInvestments[0].id }));
@@ -44,7 +42,6 @@ export default function PolicySimulator() {
   const handleRun = () => {
     setRunning(true);
     setHasRun(true);
-    // Simulate brief computation time for UX
     setTimeout(() => {
       const simResult = runSimulation(inputs);
       setResult(simResult);
@@ -59,7 +56,6 @@ export default function PolicySimulator() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -72,11 +68,9 @@ export default function PolicySimulator() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Input Panel */}
         <div className="lg:col-span-1">
           <SectionCard title="Simulation Inputs" icon={Calculator}>
             <div className="space-y-4">
-              {/* District */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">District</label>
                 <select
@@ -88,7 +82,6 @@ export default function PolicySimulator() {
                 </select>
               </div>
 
-              {/* Industry */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Industry</label>
                 <select
@@ -100,7 +93,6 @@ export default function PolicySimulator() {
                 </select>
               </div>
 
-              {/* Investment Scenario */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Investment Scenario</label>
                 {availableInvestments.length > 0 ? (
@@ -122,7 +114,6 @@ export default function PolicySimulator() {
                 )}
               </div>
 
-              {/* Budget */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Government Budget (₹ Crore)</label>
                 <input
@@ -148,7 +139,6 @@ export default function PolicySimulator() {
                 </div>
               </div>
 
-              {/* Training Target */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Training Target (people)</label>
                 <input
@@ -161,7 +151,6 @@ export default function PolicySimulator() {
                 />
               </div>
 
-              {/* Time Horizon */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Time Horizon (months)</label>
                 <input
@@ -176,7 +165,6 @@ export default function PolicySimulator() {
                 <span className="text-xs text-muted-foreground">{inputs.time_horizon_months} months</span>
               </div>
 
-              {/* Priority */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Optimization Priority</label>
                 <select
@@ -191,7 +179,6 @@ export default function PolicySimulator() {
                 </select>
               </div>
 
-              {/* Run Button */}
               <button
                 onClick={handleRun}
                 disabled={running || inputs.budget_cr <= 0}
@@ -211,7 +198,6 @@ export default function PolicySimulator() {
           </SectionCard>
         </div>
 
-        {/* Results Panel */}
         <div className="lg:col-span-2 space-y-4">
           {!result && !running && !hasRun && (
             <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -230,7 +216,6 @@ export default function PolicySimulator() {
 
           {result && !running && (
             <>
-              {/* Impact KPIs */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <KPICard icon="gaps" color="red" label="Skill-Gap Reduction" value={`${result.skill_gap_reduction_pct}%`} />
                 <KPICard icon="users" color="blue" label="Workforce Coverage" value={`${result.workforce_coverage_pct}%`} />
@@ -238,7 +223,6 @@ export default function PolicySimulator() {
                 <KPICard icon="retention" color="cyan" label="Local Retention" value={`${result.local_retention_pct}%`} />
               </div>
 
-              {/* Investment Summary */}
               {result.investment && (
                 <SectionCard title="Investment Scenario" icon={Factory} demo>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -250,7 +234,6 @@ export default function PolicySimulator() {
                 </SectionCard>
               )}
 
-              {/* Skill Gap Analysis */}
               <SectionCard title="Skill Gap Analysis" subtitle="Demand vs Supply vs Gap" icon={Wrench} demo>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={result.required_skills.map(s => ({ name: s.skill_name, demand: s.demand, supply: s.supply, gap: s.gap }))}>
@@ -264,7 +247,6 @@ export default function PolicySimulator() {
                 </ResponsiveContainer>
               </SectionCard>
 
-              {/* Budget Optimization */}
               <SectionCard title="Budget Optimization" subtitle={`₹${result.optimization.total_allocated_cr}Cr allocated of ₹${inputs.budget_cr}Cr`} icon={Wallet} demo
                 action={
                   <button
@@ -316,7 +298,6 @@ export default function PolicySimulator() {
                 </div>
               </SectionCard>
 
-              {/* Training Requirements */}
               <SectionCard title="Training Requirements" icon={GraduationCap} demo>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="p-3 rounded-lg bg-secondary/30 border border-border">
@@ -338,7 +319,6 @@ export default function PolicySimulator() {
                 </div>
               </SectionCard>
 
-              {/* Evidence */}
               <EvidencePanel
                 confidence={result.confidence}
                 evidence={result.evidence}

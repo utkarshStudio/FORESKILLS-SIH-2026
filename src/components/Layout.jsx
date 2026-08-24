@@ -15,7 +15,7 @@ import {
   LayoutDashboard, Map, Radar, AlertTriangle, TrendingUp,
   FileText, Calculator, Wallet, GitCompare, Users, FileBarChart,
   X, ShieldCheck, Menu, MapPin, ChevronDown,
-  Sun, Moon, User, LogOut, KeyRound,
+  Sun, Moon, User, LogOut, KeyRound, Database,
 } from 'lucide-react';
 import { useTheme, useAuth } from '@/hooks/hooks';
 

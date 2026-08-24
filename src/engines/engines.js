@@ -1,30 +1,8 @@
-// ============================================================
-// FORESKILLS — DETERMINISTIC ENGINES
-// Consolidation of the six deterministic engines. Each engine
-// keeps its own clearly separated section and exports — the
-// logic is NOT merged into shared functions.
-//
-//   1. Skill Gap Engine      — demand vs supply gap calculation
-//   2. Risk Engine           — economic shock / workforce risk
-//   3. Curriculum Engine     — curriculum alignment analysis
-//   4. Optimization Engine   — greedy budget allocation
-//   5. Simulation Engine     — policy simulation (uses #4)
-//   6. Scenario Engine       — side-by-side comparison (uses #5)
-//
-// All computation is deterministic: seeded data, formulas and
-// constraints. LLMs are NOT used for numerical simulation.
-// ============================================================
-
 import {
   SKILLS, SKILL_DEMAND, DISTRICTS, INDUSTRIES, COST_PARAMS, INVESTMENTS,
   getDistrictSkills, getIndustryOccupations, getRequiredSkillsForOccupations,
   getDistrictInstitutes,
 } from '@/data/data';
-
-// ============================================================
-// SECTION 1: SKILL GAP ENGINE
-// Skill Gap = Industry Demand - Available Workforce/Training Supply
-// ============================================================
 
 /**
  * @param {string} districtId
@@ -110,12 +88,6 @@ export function getEmergingSkillGaps() {
   return allGaps.sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0)).slice(0, 10);
 }
 
-// ============================================================
-// SECTION 2: RISK ENGINE
-// Economic shock / workforce risk prediction.
-// Uses weighted signal model (NOT random, NOT LLM)
-// ============================================================
-
 const RISK_WEIGHTS = {
   industry_decline: 0.20,
   automation_exposure: 0.35,
@@ -133,20 +105,16 @@ export function calculateRisk(districtId, industryId) {
   const district = DISTRICTS.find(d => d.id === districtId);
   const occupations = getIndustryOccupations(industryId);
 
-  // Signal 1: Industry decline (inverse of growth rate, clamped 0-100)
+  // decline signal inverts growth rate; clamped to 0-100
   const industryDecline = Math.max(0, Math.min(100, 50 - industry.growth_rate));
 
-  // Signal 2: Automation exposure (from industry data)
   const automationExposure = industry.automation_risk;
 
-  // Signal 3: Demand trend (based on skill demand in district for industry skills)
   const industrySkillIds = occupations.flatMap(o => o.skill_ids);
   const demandValues = industrySkillIds
     .map(sid => SKILL_DEMAND[`${districtId}__${sid}`]?.demand || 50);
   const avgDemand = demandValues.length > 0 ? demandValues.reduce((a, b) => a + b, 0) / demandValues.length : 50;
   const demandTrendSignal = Math.max(0, Math.min(100, 100 - avgDemand));
-
-  // Signal 4: Investment change (0 = neutral for MVP, can be enhanced)
   const investmentChange = 0;
 
   const signals = {
@@ -218,13 +186,6 @@ export function getAllRisks() {
   return risks.sort((a, b) => b.risk_score - a.risk_score);
 }
 
-// ============================================================
-// SECTION 3: CURRICULUM ENGINE
-// Curriculum alignment analysis (mock). Compares extracted
-// curriculum skills vs industry demand.
-// [TEAM INTEGRATION 06] Replace mock extraction with OCR/Document AI/NLP
-// ============================================================
-
 /**
  * @param {string} extractedText
  * @param {string} targetIndustryId
@@ -232,7 +193,6 @@ export function getAllRisks() {
 export function analyzeCurriculum(extractedText, targetIndustryId) {
   const textLower = extractedText.toLowerCase();
 
-  // Mock skill extraction: keyword matching against skill ontology
   /** @type {typeof SKILLS} */
   const foundSkills = [];
   for (const skill of SKILLS) {
@@ -242,7 +202,6 @@ export function analyzeCurriculum(extractedText, targetIndustryId) {
     }
   }
 
-  // Also detect common subjects/technologies
   const techKeywords = [
     'javascript', 'java', 'python', 'c++', 'php', 'mysql', 'html', 'css', 'react',
     'angular', 'node', 'sql', 'mongodb', 'docker', 'kubernetes', 'aws', 'azure',
@@ -251,7 +210,6 @@ export function analyzeCurriculum(extractedText, targetIndustryId) {
   ];
   const detectedTechnologies = techKeywords.filter(t => textLower.includes(t));
 
-  // Get industry-required skills
   const industry = INDUSTRIES.find(i => i.id === targetIndustryId);
   const industryOccupations = industry ? getIndustryOccupations(industry.id) : [];
   const requiredSkillIds = new Set(industryOccupations.flatMap(o => o.skill_ids));
@@ -260,7 +218,6 @@ export function analyzeCurriculum(extractedText, targetIndustryId) {
     return skill ? [skill] : [];
   });
 
-  // Calculate alignment
   const matchedSkills = foundSkills.filter(f => requiredSkillIds.has(f.id));
   const alignmentScore = requiredSkills.length > 0
     ? Math.round((matchedSkills.length / requiredSkills.length) * 100)
@@ -302,11 +259,6 @@ export function analyzeCurriculum(extractedText, targetIndustryId) {
   };
 }
 
-// Deterministic keyword-based skill extraction against the skill ontology.
-// Exported separately so providers/pages can extract skills without
-// running the full industry-alignment analysis.
-// When targetIndustryId is given, skills required by that industry are
-// prioritised first in the result (all matches are still returned).
 /**
  * @param {string} text
  * @param {string | null} [targetIndustryId]

@@ -29,7 +29,6 @@ export default function SkillDemand() {
       allSkills = getDistrictSkills(districtId).map(s => ({ ...s, district_name: DISTRICTS.find(d => d.id === districtId)?.name }));
     }
 
-    // Aggregate by skill if viewing all districts
     if (districtId === 'all') {
       /** @type {Record<string, typeof allSkills[number] & { count: number, districts: (string | undefined)[] }>} */
       const agg = {};
@@ -77,7 +76,6 @@ export default function SkillDemand() {
         <DataSourceBadge />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <select value={districtId} onChange={e => setDistrictId(e.target.value)} className="bg-secondary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary/50">
           <option value="all">All Districts</option>
@@ -98,7 +96,6 @@ export default function SkillDemand() {
         </div>
       </div>
 
-      {/* Chart */}
       <SectionCard title="Top Skills — Demand vs Supply" icon={TrendingUp} demo>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={chartData}>
@@ -112,7 +109,6 @@ export default function SkillDemand() {
         </ResponsiveContainer>
       </SectionCard>
 
-      {/* Skills Table */}
       <SectionCard title="Skill Intelligence" subtitle={`${skills.length} skills tracked`} icon={Radar} demo>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

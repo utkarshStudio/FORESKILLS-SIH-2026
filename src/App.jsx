@@ -19,7 +19,6 @@ import TalentMobility from '@/pages/TalentMobility';
 import Reports from '@/pages/Reports';
 import OfficerProfile from '@/pages/OfficerProfile';
 
-// Query client (previously src/lib/query-client.js)
 const queryClientInstance = new QueryClient({
   defaultOptions: {
     queries: {
@@ -29,7 +28,6 @@ const queryClientInstance = new QueryClient({
   },
 });
 
-// 404 fallback (previously src/lib/PageNotFound.jsx)
 function PageNotFound() {
   const location = useLocation();
   const pageName = location.pathname.substring(1);

@@ -49,8 +49,9 @@ npm run dev      # start the dev server (http://localhost:5173)
 
 - All figures come from the seeded demo dataset — labelled honestly in the UI
   ("Reference Dataset"). Nothing is presented as live government data.
-- The MapLibre map uses keyless OpenFreeMap basemap tiles plus the district
-  boundaries GeoJSON bundled at `public/maharashtra-districts.geojson`.
+- The MapLibre map uses keyless CARTO (Positron / Dark Matter) basemap tiles
+  plus the district boundaries GeoJSON bundled at
+  `public/maharashtra-districts.geojson`.
 
 ## Environment variables
 

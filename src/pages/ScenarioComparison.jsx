@@ -56,7 +56,6 @@ export default function ScenarioComparison() {
         <DataSourceBadge />
       </div>
 
-      {/* Input Bar */}
       <SectionCard title="Comparison Inputs" icon={GitCompare}>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           <div>
@@ -110,7 +109,6 @@ export default function ScenarioComparison() {
 
       {result && !running && (
         <>
-          {/* Recommended Banner */}
           <div className={`p-4 rounded-xl border-2 ${
             result.recommended === 'A'
               ? 'bg-blue-500/10 border-blue-500/40'
@@ -136,9 +134,7 @@ export default function ScenarioComparison() {
             </div>
           </div>
 
-          {/* Side-by-side KPIs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Scenario A */}
             <div className={`rounded-xl border-2 p-4 ${
               result.recommended === 'A' ? 'bg-blue-500/5 border-blue-500/40' : 'bg-card border-border'
             }`}>
@@ -169,7 +165,6 @@ export default function ScenarioComparison() {
               </div>
             </div>
 
-            {/* Scenario B */}
             <div className={`rounded-xl border-2 p-4 ${
               result.recommended === 'B' ? 'bg-violet-500/5 border-violet-500/40' : 'bg-card border-border'
             }`}>
@@ -201,7 +196,6 @@ export default function ScenarioComparison() {
             </div>
           </div>
 
-          {/* Comparison Chart */}
           <SectionCard title="Metric Comparison" subtitle="Side-by-side comparison of key outcomes" icon={TrendingUp} demo>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={result.comparison.filter(c => typeof c.scenario_a === 'number' && (/** @type {unknown} */ (c.scenario_b)) === 'number')} layout="vertical">
@@ -215,7 +209,6 @@ export default function ScenarioComparison() {
             </ResponsiveContainer>
           </SectionCard>
 
-          {/* Detailed Comparison Table */}
           <SectionCard title="Detailed Comparison" icon={CheckCircle} demo>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

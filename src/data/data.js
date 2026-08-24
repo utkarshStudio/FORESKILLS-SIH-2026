@@ -1,18 +1,3 @@
-// ============================================================
-// FORESKILLS — REFERENCE DATA (MAIN DEMO DATASET)
-// Single source for the seeded demo dataset, the data-source
-// registry, and entity schemas. Every page, engine and chart in
-// the application reads from this file.
-//
-// All dataset records below are DEMO / SIMULATED DATA for prototype
-// purposes. They are NOT official government data.
-// ============================================================
-
-// ------------------------------------------------------------
-// SECTION 1: REFERENCE DATASET (districts, industries, skills…)
-// ------------------------------------------------------------
-
-// --- COST PARAMETERS (deterministic, seeded) ---
 export const COST_PARAMS = {
   cost_per_seat: 0.00015,       // ₹15,000 per training seat (in Cr)
   cost_per_institute_upgrade: 0.5,  // ₹50 Lakh per institute upgrade (in Cr)
@@ -20,15 +5,15 @@ export const COST_PARAMS = {
   cost_per_trainer: 0.01,       // ₹1 Lakh per trainer (in Cr)
   cost_per_trainer_program: 0.05, // ₹5 Lakh per trainer training program (in Cr)
   cost_per_curriculum_update: 0.1, // ₹10 Lakh per curriculum update (in Cr)
-  seats_per_upgrade: 200,       // Each institute upgrade adds 200 seats
-  seats_per_lab: 100,           // Each lab adds 100 seats
-  trainees_per_trainer: 25,    // Each trainer can train 25 people
-  trainers_per_program: 20,    // Each trainer program trains 20 trainers
-  employment_rate: 0.72,       // 72% of trained people get employed
-  base_retention_rate: 0.58,   // 58% local retention baseline
+  seats_per_upgrade: 200,
+  seats_per_lab: 100,
+  trainees_per_trainer: 25,
+  trainers_per_program: 20,
+  employment_rate: 0.72,
+  base_retention_rate: 0.58,
 };
 
-// --- DISTRICTS ---
+// districts
 export const DISTRICTS = [
   {
     id: 'nashik',
@@ -137,7 +122,7 @@ export const DISTRICTS = [
   },
 ];
 
-// --- INDUSTRIES ---
+// industries
 export const INDUSTRIES = [
   { id: 'ev', name: 'EV Manufacturing', growth_rate: 22, automation_risk: 15, emerging: true, color: '#3b82f6' },
   { id: 'adv_manufacturing', name: 'Advanced Manufacturing', growth_rate: 8, automation_risk: 45, emerging: false, color: '#f59e0b' },
@@ -147,7 +132,7 @@ export const INDUSTRIES = [
   { id: 'ai_cloud', name: 'AI / Cloud', growth_rate: 28, automation_risk: 10, emerging: true, color: '#6366f1' },
 ];
 
-// --- SKILLS (with ontology) ---
+// skills
 export const SKILLS = [
   { id: 'ev_tech', name: 'EV Technology', category: 'high_demand', aliases: ['Electric Vehicle Technology', 'EV Systems'], parent: null, related: ['embedded', 'industrial_automation'], industry_ids: ['ev'], confidence: 82, growth: 22 },
   { id: 'industrial_automation', name: 'Industrial Automation', category: 'high_demand', aliases: ['PLC', 'Automation', 'SCADA'], parent: null, related: ['robotics', 'ev_tech'], industry_ids: ['ev', 'adv_manufacturing'], confidence: 78, growth: 18 },
@@ -163,7 +148,7 @@ export const SKILLS = [
   { id: 'python', name: 'Python', category: 'stable', aliases: ['Python Programming', 'Python3'], parent: null, related: ['ai', 'ml', 'data_analytics'], industry_ids: ['it_digital', 'ai_cloud'], confidence: 88, growth: 10 },
 ];
 
-// --- OCCUPATIONS ---
+// occupations
 export const OCCUPATIONS = [
   { id: 'ev_assembler', name: 'EV Assembly Operator', industry_id: 'ev', skill_ids: ['ev_tech', 'industrial_automation'], automation_risk: 20 },
   { id: 'battery_eng', name: 'Battery Systems Engineer', industry_id: 'ev', skill_ids: ['ev_tech', 'embedded'], automation_risk: 10 },
@@ -185,7 +170,7 @@ export const OCCUPATIONS = [
   { id: 'warehouse_tech', name: 'Warehouse Automation Technician', industry_id: 'logistics', skill_ids: ['robotics', 'industrial_automation'], automation_risk: 55 },
 ];
 
-// --- TRAINING INSTITUTES ---
+// training institutes
 export const TRAINING_INSTITUTES = [
   { id: 'iti_nashik_1', name: 'Govt ITI Nashik Central', district_id: 'nashik', type: 'ITI', capacity: 500, utilization: 0.85, program_skills: ['industrial_automation', 'embedded'] },
   { id: 'iti_nashik_2', name: 'Govt ITI Nashik West', district_id: 'nashik', type: 'ITI', capacity: 400, utilization: 0.80, program_skills: ['industrial_automation'] },
@@ -203,7 +188,7 @@ export const TRAINING_INSTITUTES = [
   { id: 'iti_csambhajinagar_1', name: 'Govt ITI Chhatrapati Sambhajinagar', district_id: 'csambhajinagar', type: 'ITI', capacity: 400, utilization: 0.82, program_skills: ['industrial_automation', 'semi_testing'] },
 ];
 
-// --- INVESTMENTS ---
+// investments
 export const INVESTMENTS = [
   {
     id: 'ev_nashik',
@@ -279,7 +264,7 @@ export const INVESTMENTS = [
   },
 ];
 
-// --- ECONOMIC EVENTS ---
+// economic events
 export const ECONOMIC_EVENTS = [
   {
     id: 'evt_1',
@@ -333,7 +318,7 @@ export const ECONOMIC_EVENTS = [
   },
 ];
 
-// --- MIGRATION DATA ---
+// migration data
 export const MIGRATION_DATA = [
   { district_id: 'nashik', trained: 12000, employed: 8600, retained: 5000, migrated: 3600 },
   { district_id: 'pune', trained: 25000, employed: 19500, retained: 12000, migrated: 7500 },
@@ -344,8 +329,7 @@ export const MIGRATION_DATA = [
   { district_id: 'csambhajinagar', trained: 5000, employed: 3500, retained: 2100, migrated: 1400 },
 ];
 
-// --- SKILL DEMAND BY DISTRICT (base values) ---
-// Keyed by `${district_id}__${skill_id}`
+// skill demand by district, keyed "<district>__<skill>"
 export const SKILL_DEMAND = {
   // Nashik
   'nashik__ev_tech': { demand: 88, supply: 34, growth: 22, confidence: 82, trend: 'rising' },
@@ -389,7 +373,6 @@ export const SKILL_DEMAND = {
   'csambhajinagar__robotics': { demand: 50, supply: 18, growth: 20, confidence: 75, trend: 'rising' },
 };
 
-// --- HELPER: Generate time-series data for charts ---
 export function generateTimeSeries(skillId, districtId, months = 12) {
   const key = `${districtId}__${skillId}`;
   const base = SKILL_DEMAND[key] || { demand: 50, supply: 30, growth: 10 };
@@ -419,7 +402,6 @@ export function getDistrictSkills(districtId) {
   return result;
 }
 
-// --- HELPER: Get training institutes for a district ---
 export function getDistrictInstitutes(districtId) {
   return TRAINING_INSTITUTES.filter(i => i.district_id === districtId);
 }
@@ -429,12 +411,10 @@ export function getDistrictInvestments(districtId) {
   return INVESTMENTS.filter(i => i.district_id === districtId);
 }
 
-// --- HELPER: Get occupations for an industry ---
 export function getIndustryOccupations(industryId) {
   return OCCUPATIONS.filter(o => o.industry_id === industryId);
 }
 
-// --- HELPER: Get all required skills for a set of occupations ---
 export function getRequiredSkillsForOccupations(occupationIds) {
   const skillIds = new Set();
   const occupations = [];
@@ -449,7 +429,6 @@ export function getRequiredSkillsForOccupations(occupationIds) {
   return { occupations, skills };
 }
 
-// --- HELPER: Resolve skill alias to canonical skill ---
 export function resolveSkillName(input) {
   const normalized = input.toLowerCase().trim();
   for (const skill of SKILLS) {
@@ -459,17 +438,6 @@ export function resolveSkillName(input) {
   return null;
 }
 
-// ------------------------------------------------------------
-// SECTION 2: DATA SOURCE STATUS REGISTRY
-// Tracks which data sources are connected vs reference dataset.
-// The app never fabricates "real" data. Where a live source is not
-// connected, the UI shows an honest empty / "not configured" state.
-// ------------------------------------------------------------
-
-// Final demo mode: no live connectors exist. Every source below is
-// reported honestly as disconnected, and the app runs entirely on
-// the seeded REFERENCE DATASET used to drive the deterministic
-// simulation engines — this is NOT claimed to be live government data.
 export const DATA_SOURCES = {
   labourMarket: {
     id: 'labourMarket',
@@ -512,8 +480,6 @@ export const DATA_SOURCES = {
   },
 };
 
-// The simulation engines operate over a seeded reference dataset.
-// This is surfaced honestly — not labelled as live production data.
 export const REFERENCE_DATASET = {
   label: 'Reference Dataset',
   note: 'Seeded reference dataset drives deterministic simulation. Connect a live source for production use.',
@@ -528,13 +494,6 @@ export function isSourceConnected(id) {
 }
 
 export const ANY_LIVE_SOURCE_CONNECTED = Object.values(DATA_SOURCES).some((s) => s.connected);
-
-// ------------------------------------------------------------
-// SECTION 3: ENTITY SCHEMAS
-// Reference schema definitions (previously JSONC documents under
-// src/data/entities/). Documentation-only today — intended as the
-// shape contract when real API/database sources replace this file.
-// ------------------------------------------------------------
 
 export const ENTITY_SCHEMAS = {
   User: {

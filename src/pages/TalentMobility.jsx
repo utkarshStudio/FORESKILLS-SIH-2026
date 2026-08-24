@@ -50,7 +50,6 @@ export default function TalentMobility() {
         <DataSourceBadge />
       </div>
 
-      {/* Statewide KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KPICard icon="users" color="cyan" label="Total Trained" value={totals.trained.toLocaleString()} />
         <KPICard icon="users" color="blue" label="Employed" value={totals.employed.toLocaleString()} sublabel={`${totals.employmentPct}% employment`} />
@@ -59,14 +58,12 @@ export default function TalentMobility() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Map */}
         <div className="lg:col-span-2">
           <SectionCard title="Maharashtra Talent Flow" subtitle="Click a district to view details" icon={MapPin} demo>
             <MaharashtraMap onDistrictClick={(id) => setSelectedDistrict(id)} selectedDistrictId={selectedDistrict} height={350} />
           </SectionCard>
         </div>
 
-        {/* District Detail */}
         <SectionCard title={district?.name} subtitle="Talent mobility breakdown" icon={Users} demo>
           {districtData && (
             <div className="space-y-3">
@@ -114,7 +111,6 @@ export default function TalentMobility() {
         </SectionCard>
       </div>
 
-      {/* District Comparison Chart */}
       <SectionCard title="District Comparison" subtitle="Trained vs Employed vs Retained vs Migrated" icon={TrendingUp} demo>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
