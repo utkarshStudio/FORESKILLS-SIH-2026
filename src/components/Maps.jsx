@@ -1,10 +1,10 @@
 // ============================================================
 // FORESKILLS — MAP COMPONENTS
 // District map visualization for Maharashtra (previously
-// src/components/MaharashtraMap.jsx). Real MapLibre GL map:
-// CARTO Positron/Dark Matter basemap tiles (keyless), real Maharashtra
-// district boundaries (DataMeet / LGD, CC BY 4.0), metric coloring,
-// hover tooltip, click-to-select, zoom controls and legend.
+// src/components/MaharashtraMap.jsx). Real MapLibre GL map on a
+// lightweight CARTO raster basemap, real Maharashtra district
+// boundaries (DataMeet / LGD, CC BY 4.0), metric coloring, hover
+// tooltip, click-to-select, zoom controls and legend.
 // ============================================================
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -26,111 +26,64 @@ import { RiskBadge } from './Common';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 setWorkerUrl(/** @type {string} */ (maplibreWorkerUrl));
 
-// CARTO Positron / Dark Matter GL styles: keyless, MapLibre-compatible
-// vector basemaps served from the globally-distributed basemaps.cartocdn.com
-// CDN (free for non-commercial use). Chosen over OpenFreeMap after its
-// single-origin tile service intermittently stalled style/tile loads.
-// The raw styles are re-tinted per app theme (see THEME_TINTS) so the
-// basemap blends with --background instead of clashing with it.
-const STYLE_URLS = {
-  light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+// Lightweight basemap: CARTO raster tiles (light_all / dark_all,
+// keyless, free for non-commercial use) referenced from an inline GL
+// style. Raster tiles replace the previous heavy Positron/Dark Matter
+// *vector* styles — one small 256px PNG per tile cell instead of a
+// style JSON plus dozens of vector layers, sprites and glyph/font
+// fetches — so first paint is fast and data usage stays low. Tile
+// loads are capped at zoom 12; deeper zooming reuses (upscaled) tiles.
+const BASMAP_TILE_URLS = {
+  light: [
+    'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+  ],
+  dark: [
+    'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+  ],
 };
 
-/**
- * Basemap tint palette mirroring the --background/--card tokens in
- * index.css for each theme. Concrete HSL strings (paint props cannot
- * resolve CSS variables).
- * @type {{ light: Record<string, string>, dark: Record<string, string> }}
- */
-const THEME_TINTS = {
-  light: {
-    background: 'hsl(220, 26%, 96%)',
-    water: 'hsl(211, 51%, 88%)',
-    green: 'hsl(106, 32%, 92%)',
-    building: 'hsl(220, 16%, 91%)',
-  },
-  dark: {
-    background: 'hsl(222, 26%, 10%)',
-    water: 'hsl(216, 42%, 13%)',
-    green: 'hsl(162, 20%, 12%)',
-    greenLine: 'hsl(162, 20%, 22%)',
-    building: 'hsl(222, 18%, 15%)',
-  },
-};
+/** Max tile zoom fetched from the basemap source (overzoom beyond). */
+const BASEMAP_MAXZOOM = 12;
 
 /**
- * Id-pattern matchers applied to every basemap layer to retint it.
- * @type {[RegExp, ('background'|'water'|'green'|'building')][]}
- */
-const TINT_MATCHERS = [
-  [/^water|water-|waterway/, 'water'],
-  [/park|wood|forest|grass|scrub|landcover|landuse|agriculture/, 'green'],
-  [/^building/, 'building'],
-];
-
-/**
- * Rewrites key paint colors of a fetched GL style JSON so the basemap
- * follows the active app theme. Mutates and returns the style object.
- * @param {any} styleJson
+ * Builds the minimal inline basemap style (theme-aware) around the
+ * raster tile source.
  * @param {boolean} isDark
  * @returns {any}
  */
-function applyBasemapTheme(styleJson, isDark) {
-  const tints = isDark ? THEME_TINTS.dark : THEME_TINTS.light;
-  if (!styleJson || !Array.isArray(styleJson.layers)) return styleJson;
-  for (const layer of styleJson.layers) {
-    if (!layer || typeof layer.id !== 'string') continue;
-    const paint = /** @type {Record<string, any>} */ (layer.paint ??= {});
-    if (layer.id === 'background') {
-      paint['background-color'] = tints.background;
-      continue;
-    }
-    let kind = null;
-    for (const [pattern, value] of TINT_MATCHERS) {
-      if (pattern.test(layer.id)) { kind = value; break; }
-    }
-    if (!kind) continue;
-    if (layer.type === 'fill') {
-      paint['fill-color'] = tints[kind];
-      if (typeof paint['fill-outline-color'] === 'string') {
-        paint['fill-outline-color'] = tints.greenLine ?? paint['fill-outline-color'];
-      }
-    } else if (layer.type === 'line') {
-      paint['line-color'] = kind === 'green' ? (tints.greenLine ?? tints.green) : tints[kind];
-    }
-  }
-  return styleJson;
-}
-
-const themedStyleCache = new Map();
-
-/**
- * Fetches (once) and theme-tints a basemap style. Resolves to the raw
- * URL on any failure so map creation degrades to stock styling rather
- * than breaking.
- * @param {boolean} isDark
- * @returns {Promise<any>}
- */
-function getThemedBasemapStyle(isDark) {
-  const themeKey = isDark ? 'dark' : 'light';
-  const url = STYLE_URLS[themeKey];
-  if (!themedStyleCache.has(themeKey)) {
-    themedStyleCache.set(
-      themeKey,
-      fetch(url)
-        .then((response) => {
-          if (!response.ok) throw new Error(`Basemap style HTTP ${response.status}`);
-          return response.json();
-        })
-        .then((styleJson) => applyBasemapTheme(styleJson, isDark))
-        .catch((err) => {
-          console.warn('FORESKILLS MAP: themed basemap unavailable, using stock style.', err);
-          return url;
-        })
-    );
-  }
-  return themedStyleCache.get(themeKey);
+function getBasemapStyle(isDark) {
+  return {
+    version: 8,
+    sources: {
+      basemap: {
+        type: 'raster',
+        tiles: isDark ? BASMAP_TILE_URLS.dark : BASMAP_TILE_URLS.light,
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: BASEMAP_MAXZOOM,
+        attribution: '© OpenStreetMap contributors © CARTO',
+      },
+    },
+    layers: [
+      {
+        id: 'background',
+        type: 'background',
+        paint: { 'background-color': isDark ? 'hsl(222, 26%, 10%)' : 'hsl(220, 26%, 96%)' },
+      },
+      {
+        id: 'basemap',
+        type: 'raster',
+        source: 'basemap',
+        paint: { 'raster-fade-duration': 0 },
+      },
+    ],
+  };
 }
 
 const HOME_VIEW = { center: /** @type {[number, number]} */ ([75.9, 19.3]), zoom: 5.55 };
@@ -327,7 +280,6 @@ function ensureDistrictLayers(map) {
 
   const styleLayers = map.getStyle()?.layers ?? [];
   const firstSymbolLayer = styleLayers.find((layer) => layer.type === 'symbol');
-
   if (!map.getLayer(LAYER_FILL)) {
     map.addLayer(
       {
@@ -504,19 +456,21 @@ export default function MaharashtraMap({ metric = 'risk', onDistrictClick, selec
       const geoJSONPromise = loadDistrictGeoJSON();
 
       console.debug('[FORESKILLS MAP] MapLibre initialized');
-      getThemedBasemapStyle(styleIsDarkRef.current).then((style) => {
-        if (disposed || !containerRef.current || mapRef.current) return;
-        const map = new MapLibreMap({
-          container: containerRef.current,
-          style,
-          center: HOME_VIEW.center,
-          zoom: HOME_VIEW.zoom,
-          attributionControl: false,
-        });
+      if (disposed || !containerRef.current || mapRef.current) return;
+      const map = new MapLibreMap({
+        container: containerRef.current,
+        style: getBasemapStyle(styleIsDarkRef.current),
+        center: HOME_VIEW.center,
+        zoom: HOME_VIEW.zoom,
+        attributionControl: false,
+        fadeDuration: 0,
+      });
       map.addControl(
         new AttributionControl({
           compact: true,
-          customAttribution: '© CARTO · © OpenStreetMap contributors · District boundaries © DataMeet India / LGD (CC BY 4.0)',
+          // OSM/CARTO credits are picked up automatically from the
+          // raster source's `attribution` field.
+          customAttribution: 'District boundaries © DataMeet India / LGD (CC BY 4.0)',
         }),
         'bottom-right'
       );
@@ -543,14 +497,11 @@ export default function MaharashtraMap({ metric = 'risk', onDistrictClick, selec
       const syncStyleThenRefresh = (targetMap) => {
         if (styleIsDarkRef.current !== isDarkRef.current) {
           styleIsDarkRef.current = isDarkRef.current;
-          getThemedBasemapStyle(isDarkRef.current).then((style) => {
-            if (disposed) return;
-            targetMap.once('styledata', () => {
-              ensureDistrictLayers(targetMap);
-              refreshPaint(targetMap);
-            });
-            targetMap.setStyle(style);
+          targetMap.once('styledata', () => {
+            ensureDistrictLayers(targetMap);
+            refreshPaint(targetMap);
           });
+          targetMap.setStyle(getBasemapStyle(isDarkRef.current));
         } else {
           ensureDistrictLayers(targetMap);
           refreshPaint(targetMap);
@@ -630,7 +581,6 @@ export default function MaharashtraMap({ metric = 'risk', onDistrictClick, selec
       if (import.meta.env.DEV) {
         /** @type {any} */ (window).__fsMap = map;
       }
-      });
     };
 
     creationTimer = window.setTimeout(createMap, 0);
@@ -661,15 +611,11 @@ export default function MaharashtraMap({ metric = 'risk', onDistrictClick, selec
     if (!map || !loadedRef.current) return;
     if (styleIsDarkRef.current === isDark) return;
     styleIsDarkRef.current = isDark;
-    getThemedBasemapStyle(isDark).then((style) => {
-      // Map may have been removed (or swapped again) while fetching.
-      if (mapRef.current !== map || styleIsDarkRef.current !== isDark) return;
-      map.once('styledata', () => {
-        ensureDistrictLayers(map);
-        refreshPaint(map);
-      });
-      map.setStyle(style);
+    map.once('styledata', () => {
+      ensureDistrictLayers(map);
+      refreshPaint(map);
     });
+    map.setStyle(getBasemapStyle(isDark));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDark]);
 
