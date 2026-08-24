@@ -14,10 +14,9 @@ import { NavLink, Outlet, useLocation, useNavigationType, useNavigate } from 're
 import {
   LayoutDashboard, Map, Radar, AlertTriangle, TrendingUp,
   FileText, Calculator, Wallet, GitCompare, Users, FileBarChart,
-  X, ShieldCheck, Menu, MapPin, Clock, Database, ChevronDown,
+  X, ShieldCheck, Menu, MapPin, ChevronDown,
   Sun, Moon, User, LogOut, KeyRound,
 } from 'lucide-react';
-import { REFERENCE_DATASET } from '@/data/data';
 import { useTheme, useAuth } from '@/hooks/hooks';
 
 // ------------------------------------------------------------
@@ -172,8 +171,9 @@ export function ThemeToggle() {
 
 // ------------------------------------------------------------
 // OFFICER MENU — functional dropdown.
-// Uses real auth context. Where auth details are not yet provisioned,
-// shows honest placeholders + a clear "future integration" note.
+// Profile opens the officer profile page; role and data access come
+// from the auth session; Sign Out clears the local demo session and
+// returns to the Decision Center. SSO stays a future integration.
 // ------------------------------------------------------------
 
 export function OfficerMenu() {
@@ -199,8 +199,9 @@ export function OfficerMenu() {
     };
   }, []);
 
-  const displayName = user?.full_name || (isAuthenticated ? 'Officer' : 'Government Officer');
-  const role = user?.role === 'admin' ? 'State Official' : 'State Official';
+  const displayName = user?.full_name || user?.displayName || (isAuthenticated ? 'Officer' : 'Government Officer');
+  const role = user?.role || 'State Official';
+  const dataAccess = user?.dataAccess || 'Reference Dataset';
   const initials = (displayName || 'GO')
     .split(' ')
     .map((w) => w[0])
@@ -211,6 +212,7 @@ export function OfficerMenu() {
   const handleSignOut = () => {
     setOpen(false);
     logout();
+    navigate('/', { replace: true });
   };
 
   return (
@@ -241,28 +243,26 @@ export function OfficerMenu() {
             <p className="text-sm font-semibold text-foreground">{displayName}</p>
             <p className="text-xs text-muted-foreground">{role}</p>
             <p className="text-[10px] text-muted-foreground/70 mt-1">
-              {isAuthenticated ? 'Signed in' : 'Authentication pending'}
+              {isAuthenticated ? 'Signed in · Demo session' : 'Signed out'}
             </p>
           </div>
 
           <div className="py-1">
-            <MenuItem icon={User} label="Profile" onClick={() => { setOpen(false); }} />
-            <MenuItem icon={ShieldCheck} label="Role" detail={role} onClick={() => { setOpen(false); }} />
-            <MenuItem icon={Database} label="Data Access" detail="Reference Dataset" onClick={() => { setOpen(false); navigate('/reports'); }} />
+            <MenuItem icon={User} label="Profile" onClick={() => { setOpen(false); navigate('/profile'); }} />
+            <MenuItem icon={ShieldCheck} label="Role" detail={role} onClick={() => { setOpen(false); navigate('/profile'); }} />
+            <MenuItem icon={Database} label="Data Access" detail={dataAccess} onClick={() => { setOpen(false); navigate('/reports'); }} />
           </div>
 
           <div className="py-1 border-t border-border">
             <MenuItem icon={LogOut} label="Sign Out" destructive onClick={handleSignOut} />
           </div>
 
-          {!isAuthenticated && (
-            <div className="px-3 py-2 border-t border-border bg-muted/40">
-              <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5">
-                <KeyRound className="w-3 h-3" />
-                SSO authentication is a future integration.
-              </p>
-            </div>
-          )}
+          <div className="px-3 py-2 border-t border-border bg-muted/40">
+            <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5">
+              <KeyRound className="w-3 h-3" />
+              SSO authentication is a future integration.
+            </p>
+          </div>
         </div>
       )}
     </div>
@@ -298,23 +298,8 @@ function MenuItem({ icon: Icon, label, detail = '', onClick = () => {}, destruct
 // TOPBAR
 // ------------------------------------------------------------
 
-const PERIODS = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'FY 2025-26'];
-
 /** @param {{ onMenuClick: () => void }} props */
 export function Topbar({ onMenuClick }) {
-  const [period, setPeriod] = useState('Q2 2026');
-  const [periodOpen, setPeriodOpen] = useState(false);
-  const periodRef = useRef(/** @type {HTMLDivElement | null} */ (null));
-
-  useEffect(() => {
-    /** @param {MouseEvent} e */
-    function handleClick(e) {
-      if (periodRef.current && !periodRef.current.contains(/** @type {Node} */ (e.target))) setPeriodOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
   return (
     <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="flex items-center justify-between gap-3 px-4 lg:px-6 h-14">
@@ -333,44 +318,6 @@ export function Topbar({ onMenuClick }) {
 
         {/* Right — controls */}
         <div className="flex items-center gap-2">
-          {/* Analysis Period */}
-          <div className="relative hidden md:block" ref={periodRef}>
-            <button
-              type="button"
-              onClick={() => setPeriodOpen((o) => !o)}
-              aria-haspopup="listbox"
-              aria-expanded={periodOpen}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground px-2.5 py-1.5 rounded-md border border-border bg-card hover:bg-accent/10 transition-colors"
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Analysis: {period}</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${periodOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {periodOpen && (
-              <div role="listbox" className="absolute right-0 mt-1 w-44 bg-popover border border-border rounded-md shadow-lg z-50 py-1">
-                {PERIODS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => { setPeriod(p); setPeriodOpen(false); }}
-                    className={`w-full text-left px-3 py-1.5 text-sm hover:bg-accent/10 ${p === period ? 'text-primary font-medium' : 'text-foreground'}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Data Source status */}
-          <div
-            className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-muted/40 text-muted-foreground"
-            title={REFERENCE_DATASET.note}
-          >
-            <Database className="w-3.5 h-3.5" />
-            <span>{REFERENCE_DATASET.label}</span>
-          </div>
-
           <ThemeToggle />
           <OfficerMenu />
         </div>

@@ -4,6 +4,7 @@ import { reportProvider } from '@/providers/providers';
 import { DISTRICTS, INVESTMENTS } from '@/data/data';
 import { runSimulation, compareScenarios, calculateDistrictSkillGaps, getTotalSkillGap } from '@/engines/engines';
 import { SectionCard, DataSourceBadge } from '@/components/Common';
+import { downloadReportPdf } from '@/lib/reportPdf';
 
 const REPORT_TYPES = [
   { id: 'district_gap', label: 'District Skill Gap Report', icon: FileText, description: 'Comprehensive skill gap analysis for a selected district' },
@@ -44,6 +45,7 @@ export default function Reports() {
   const [generating, setGenerating] = useState(false);
   const [exportingDocs, setExportingDocs] = useState(false);
   const [exportingSlides, setExportingSlides] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [exportResult, setExportResult] = useState(/** @type {ExportResultData|null} */ (null));
 
   const handleGenerate = () => {
@@ -163,39 +165,17 @@ export default function Reports() {
     }, 600);
   };
 
-  const handleDownload = () => {
-    if (!generatedReport) return;
-    const text = `FORESKILLS — ${generatedReport.type}
-${'='.repeat(60)}
-Generated: ${generatedReport.timestamp}
-Data Source: Reference dataset
-
-INPUTS:
-${Object.entries(generatedReport.inputs).map(([k, v]) => `  ${k}: ${v}`).join('\n')}
-
-METHOD:
-  ${generatedReport.method}
-
-RESULTS:
-${JSON.stringify(generatedReport.results, null, 2)}
-
-CONFIDENCE: ${generatedReport.confidence}%
-
-EVIDENCE:
-${generatedReport.evidence.map(e => `  • ${e}`).join('\n')}
-
-${'='.repeat(60)}
-FORESKILLS — Workforce Intelligence & Policy Simulation
-"Predict workforce change. Simulate the response. Optimize the investment."
-`;
-
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FORESKILLS_${selectedReport}_${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    if (!generatedReport || downloadingPdf) return;
+    setDownloadingPdf(true);
+    setExportResult(null);
+    try {
+      await downloadReportPdf(generatedReport);
+    } catch (err) {
+      setExportResult({ error: `PDF download failed: ${err?.message || 'unknown error'}` });
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   const handleExportToDocs = async () => {
@@ -305,8 +285,8 @@ FORESKILLS — Workforce Intelligence & Policy Simulation
               demo
               action={
                 <div className="flex items-center gap-2">
-                  <button onClick={handleDownload} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                    <Download className="w-3.5 h-3.5" /> Download
+                  <button onClick={handleDownload} disabled={downloadingPdf} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 disabled:opacity-50">
+                    {downloadingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Download
                   </button>
                   <button onClick={handleExportToDocs} disabled={exportingDocs} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 disabled:opacity-50">
                     {exportingDocs ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />} Docs

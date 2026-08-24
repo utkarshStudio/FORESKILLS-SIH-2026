@@ -2,7 +2,7 @@
 // FORESKILLS — SHARED HOOKS & CONTEXTS
 // Small application-wide React hooks consolidated in one module:
 //   • useTheme      — light/dark theme with localStorage persistence
-//   • AuthProvider / useAuth — local session context (no backend auth yet)
+//   • AuthProvider / useAuth — local demo session (persisted, no backend)
 //   • useIsMobile   — responsive breakpoint flag
 //   • useSize       — element size measurement via ResizeObserver
 // ============================================================
@@ -50,11 +50,12 @@ export function useTheme() {
 
 // ------------------------------------------------------------
 // LOCAL SESSION CONTEXT
-// FORESKILLS runs without a backend authentication service.
-// Authentication (SSO) is a future integration — until then this
-// context provides a stable local session shape for the UI and
-// clearly reports that auth is not connected. No network calls,
-// no vendor SDK, no secrets.
+// FORESKILLS runs without a backend authentication service, so the
+// provider establishes a safe local demo session automatically and
+// persists it to localStorage (`foreskills-session`) so sign-in
+// survives page refreshes. Sign out clears it. Authentication (SSO)
+// is a future integration — no network calls, no vendor SDK, and
+// no secrets (passwords/keys) are ever stored.
 // ------------------------------------------------------------
 
 const SESSION_STORAGE_KEY = 'foreskills-session';
@@ -66,11 +67,13 @@ const SESSION_STORAGE_KEY = 'foreskills-session';
  * @property {string} department
  * @property {string} dataAccess
  * @property {string} [full_name]
+ * @property {boolean} [authenticated]
+ * @property {string} [signInAt]
  */
 
 /**
  * @typedef {Object} AuthContextValue
- * @property {UserSession} user
+ * @property {UserSession | null} user
  * @property {boolean} isAuthenticated
  * @property {boolean} isLoadingAuth
  * @property {boolean} isLoadingPublicSettings
@@ -81,12 +84,12 @@ const SESSION_STORAGE_KEY = 'foreskills-session';
  * @property {() => void} logout
  */
 
-// Current operating role for this workstation. Replace when SSO lands.
+// Operating role for this workstation. Replace when SSO lands.
 const DEFAULT_SESSION = Object.freeze({
   displayName: 'Government Officer',
-  role: 'Government Officer',
+  role: 'State Official',
   department: 'Skill Development Department',
-  dataAccess: 'Reference dataset (read-only)',
+  dataAccess: 'Reference Dataset',
 });
 
 /** @returns {Partial<UserSession> | null} */
@@ -100,20 +103,48 @@ function readStoredSession() {
   }
 }
 
+/** @param {UserSession | null} session */
+function persistSession(session) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (session) window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+    else window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    // Storage unavailable — the demo session still works in memory.
+  }
+}
+
+/** @returns {UserSession} */
+function createDemoSession() {
+  return {
+    ...DEFAULT_SESSION,
+    authenticated: true,
+    signInAt: new Date().toISOString(),
+  };
+}
+
 const AuthContext = createContext(/** @type {AuthContextValue | null} */ (null));
 
 /** @param {{ children: React.ReactNode }} props */
 export function AuthProvider({ children }) {
-  /** @type {UserSession} */
-  const session = useMemo(() => {
+  const [session, setSession] = useState(/** @type {UserSession | null} */ () => {
     const stored = readStoredSession();
-    return { ...DEFAULT_SESSION, ...(stored || {}) };
+    if (stored && stored.authenticated) return { ...DEFAULT_SESSION, ...stored };
+    return null;
+  });
+
+  // Demo mode: establish the local officer session on first load.
+  useEffect(() => {
+    setSession((current) => current || createDemoSession());
   }, []);
 
+  useEffect(() => {
+    persistSession(session);
+  }, [session]);
+
   const value = useMemo(() => ({
-    // Shape kept compatible with existing consumers.
     user: session,
-    isAuthenticated: false, // no auth service connected yet
+    isAuthenticated: !!session?.authenticated,
     isLoadingAuth: false,
     isLoadingPublicSettings: false,
     authError: null,
@@ -121,15 +152,17 @@ export function AuthProvider({ children }) {
     authChecked: true,
     isLocalSession: true,
     logout() {
-      // Clear any local FORESKILLS state (no server session exists yet).
+      // Clear local FORESKILLS session state. The device theme
+      // preference is kept; no server session exists to invalidate.
       if (typeof window !== 'undefined') {
         const keysToRemove = [];
         for (let i = 0; i < window.localStorage.length; i++) {
           const key = window.localStorage.key(i);
-          if (key && key.startsWith('foreskills-')) keysToRemove.push(key);
+          if (key && key.startsWith('foreskills-') && key !== THEME_STORAGE_KEY) keysToRemove.push(key);
         }
         keysToRemove.forEach((key) => window.localStorage.removeItem(key));
       }
+      setSession(null);
     },
   }), [session]);
 
